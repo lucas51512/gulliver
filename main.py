@@ -42,10 +42,10 @@ t_QUOTE = r'\''
 t_SEMICOLON = r';'
 t_ignore = ' \t'
 t_ASSIGN = r'='
-t_PLUS = r'+'
+t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'*'
-t_COMMA = r'"'
+t_COMMA = r','
 
 def t_identifier(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
