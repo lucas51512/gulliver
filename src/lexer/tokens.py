@@ -60,7 +60,6 @@ class Tokens:
         'ELLIPSIS',
         'COLONEQUAL',
         'EXCLAMATION',
-        'STRING'
     ] + list(reserved.values())
 
     t_LPAREN = r'\('

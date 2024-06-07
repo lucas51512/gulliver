@@ -1,5 +1,5 @@
 import ply.yacc as yacc
-from lexer.lexer import tokens
+from src.lexer.tokens import Tokens
 
 class GulliverParser:
     def __init__(self):
