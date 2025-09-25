@@ -1,7 +1,9 @@
-# main.py
+# main.py - Gulliver 2.0 Language Demo
+# Now supports .gl file extension (Gulliver Language)
 from src.lexer.lexer import Lexer
 
 if __name__ == "__main__":
+    # Sample Gulliver (.gl) quantum algorithm code - Grover's search
     data = """
     def main() -> void {
         def invertBits(register: int) -> int {
@@ -39,8 +41,21 @@ if __name__ == "__main__":
     }
     """
 
+    print("=== GULLIVER 2.0 LANGUAGE LEXER DEMO ===")
+    print("File extension: .gl (Gulliver Language)")
+    print("Parsing quantum algorithm code...\n")
+
     lexer = Lexer()
     tokens = lexer.tokenize(data)
 
-    for token in tokens:
-        print(token)
+    print(f"Generated {len(tokens)} tokens:")
+    for i, token in enumerate(tokens):
+        if i < 20:  # Show first 20 tokens
+            print(f"{i+1:2d}: {token}")
+        elif i == 20:
+            print("... (truncated, showing first 20 tokens)")
+            break
+    
+    print(f"\n=== Lexical analysis complete ===")
+    print("✅ Gulliver 2.0 ready for quantum programming!")
+    print("💡 Try running: liliput run examples/grover.gl")
