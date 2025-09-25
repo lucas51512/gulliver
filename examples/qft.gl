@@ -1,0 +1,182 @@
+// Quantum Fourier Transform (QFT) Implementation
+// Performs the quantum analog of the discrete Fourier transform
+
+def main() -> void {
+    // Apply controlled rotation gate with specific angle
+    def controlledRotation(control: int, target: int, k: int) -> int[] {
+        // R_k gate: controlled rotation by 2π/2^k
+        let angle: float = 2.0 * pi() / pow(2, k);
+        return crz(control, target, angle);
+    }
+
+    // Single qubit QFT step
+    def qftStep(qubit: int, controls: int[], position: int) -> int {
+        // Apply Hadamard gate
+        let result: int = had(qubit);
+        
+        // Apply controlled rotations from all previous qubits
+        for (let i: int = 0; i < position; i = i + 1) {
+            let k: int = position - i + 1;
+            let pair: int[] = controlledRotation(controls[i], result, k);
+            result = pair[1];  // Updated target qubit
+        }
+        
+        return result;
+    }
+
+    // Bit reversal operation for QFT output
+    def reverseBits(register: int[]) -> int[] {
+        let n: int = size(register);
+        let reversed: int[n];
+        
+        for (let i: int = 0; i < n; i = i + 1) {
+            reversed[i] = register[n - 1 - i];
+        }
+        
+        return reversed;
+    }
+
+    // Complete Quantum Fourier Transform
+    def quantumFourierTransform(register: int[]) -> int[] {
+        let n: int = size(register);
+        let result: int[n];
+        
+        // Copy input register
+        for (let i: int = 0; i < n; i = i + 1) {
+            result[i] = register[i];
+        }
+        
+        print("Applying QFT to ", n, "-qubit register...");
+        
+        // Apply QFT circuit
+        for (let i: int = 0; i < n; i = i + 1) {
+            print("Processing qubit ", i);
+            
+            // Get control qubits (all qubits processed so far)
+            let controls: int[i];
+            for (let j: int = 0; j < i; j = j + 1) {
+                controls[j] = result[j];
+            }
+            
+            // Apply QFT step to current qubit
+            result[i] = qftStep(result[i], controls, i);
+        }
+        
+        // Reverse the order of qubits (bit reversal)
+        print("Applying bit reversal...");
+        result = reverseBits(result);
+        
+        return result;
+    }
+
+    // Inverse Quantum Fourier Transform
+    def inverseQFT(register: int[]) -> int[] {
+        let n: int = size(register);
+        let result: int[n];
+        
+        // Copy and reverse input
+        result = reverseBits(register);
+        
+        print("Applying Inverse QFT...");
+        
+        // Apply inverse QFT (reverse the QFT operations)
+        for (let i: int = n - 1; i >= 0; i = i - 1) {
+            // Apply inverse controlled rotations
+            for (let j: int = i - 1; j >= 0; j = j - 1) {
+                let k: int = i - j + 1;
+                let angle: float = -2.0 * pi() / pow(2, k);  // Negative angle for inverse
+                let pair: int[] = crz(result[j], result[i], angle);
+                result[i] = pair[1];
+            }
+            
+            // Apply Hadamard (its own inverse)
+            result[i] = had(result[i]);
+        }
+        
+        return result;
+    }
+
+    // Prepare a test state for QFT demonstration
+    def prepareTestState(n: int) -> int[] {
+        let register: int[n];
+        
+        // Initialize in |0⟩ state
+        for (let i: int = 0; i < n; i = i + 1) {
+            register[i] = 0;
+        }
+        
+        // Create a specific test state: |001⟩ (binary 1)
+        if (n >= 3) {
+            register[2] = x(register[2]);  // Flip the last qubit
+        }
+        
+        return register;
+    }
+
+    // Measure and display quantum state
+    def measureAndDisplay(register: int[], label: string) -> int[] {
+        let n: int = size(register);
+        let measurements: int[n];
+        let binaryValue: int = 0;
+        
+        print(label);
+        for (let i: int = 0; i < n; i = i + 1) {
+            measurements[i] = measure(register[i]);
+            binaryValue = binaryValue + measurements[i] * pow(2, n - 1 - i);
+            print("Qubit ", i, ": ", measurements[i]);
+        }
+        
+        print("Binary representation: ", binaryValue);
+        print("Decimal value: ", binaryValue);
+        print("");
+        
+        return measurements;
+    }
+
+    // Demo execution
+    print("=====================================");
+    print("   QUANTUM FOURIER TRANSFORM DEMO   ");
+    print("=====================================");
+    print("");
+
+    // Test parameters
+    let numQubits: int = 3;
+    
+    print("QFT Parameters:");
+    print("- Number of qubits: ", numQubits);
+    print("- Hilbert space dimension: ", pow(2, numQubits));
+    print("");
+
+    // Step 1: Prepare initial state
+    print("=== STEP 1: Initial State Preparation ===");
+    let initialState: int[] = prepareTestState(numQubits);
+    let initialMeasure: int[] = measureAndDisplay(initialState, "Initial state |001⟩:");
+
+    // Step 2: Apply QFT
+    print("=== STEP 2: Quantum Fourier Transform ===");
+    let qftState: int[] = quantumFourierTransform(initialState);
+    let qftMeasure: int[] = measureAndDisplay(qftState, "After QFT:");
+
+    // Step 3: Apply Inverse QFT
+    print("=== STEP 3: Inverse Quantum Fourier Transform ===");
+    let inverseState: int[] = inverseQFT(qftState);
+    let inverseMeasure: int[] = measureAndDisplay(inverseState, "After Inverse QFT (should match initial):");
+
+    // Analysis
+    print("=== ANALYSIS ===");
+    print("QFT Properties:");
+    print("- Transforms computational basis to frequency domain");
+    print("- Complexity: O(n²) gates for n qubits");
+    print("- Reversible: QFT† = Inverse QFT");
+    print("- Essential for quantum algorithms (Shor's, etc.)");
+    print("");
+
+    let gateCount: int = (numQubits * (numQubits + 1)) / 2;
+    print("Circuit complexity:");
+    print("- Total gates used: ~", gateCount);
+    print("- Depth: O(n) layers");
+    print("- Classical FFT comparison: O(n log n) vs O(n²) quantum");
+    
+    print("");
+    print("=== QFT Demo Complete ===");
+}

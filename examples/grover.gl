@@ -1,0 +1,142 @@
+// Grover's Quantum Search Algorithm Implementation
+// Searches for a marked element in an unsorted database with O(√N) complexity
+
+def main() -> void {
+    // Oracle function - marks the target element by flipping its phase
+    def oracle(register: int[], target: int) -> int[] {
+        // This is a simplified oracle that marks element at index 'target'
+        // In real implementation, this would flip the phase of the target state
+        let n: int = size(register);
+        for (let i: int = 0; i < n; i = i + 1) {
+            if (i == target) {
+                register[i] = z(register[i]);  // Phase flip for target
+            }
+        }
+        return register;
+    }
+
+    // Diffusion operator (amplitude amplification about average)
+    def diffusion(register: int[]) -> int[] {
+        let n: int = size(register);
+        
+        // Apply Hadamard to all qubits
+        for (let i: int = 0; i < n; i = i + 1) {
+            register[i] = had(register[i]);
+        }
+        
+        // Flip phase of |00...0⟩ state
+        register[0] = z(register[0]);
+        for (let i: int = 1; i < n; i = i + 1) {
+            register[0] = cz(register[0], register[i]);
+        }
+        
+        // Apply Hadamard again
+        for (let i: int = 0; i < n; i = i + 1) {
+            register[i] = had(register[i]);
+        }
+        
+        return register;
+    }
+
+    // Main Grover algorithm
+    def groverSearch(numQubits: int, targetIndex: int) -> int {
+        let n: int = pow(2, numQubits);  // Database size
+        let iterations: int = round(pi() * sqrt(n) / 4);  // Optimal iterations
+        
+        print("Grover Search Parameters:");
+        print("- Database size: ", n);
+        print("- Target index: ", targetIndex);
+        print("- Optimal iterations: ", iterations);
+        print("");
+
+        // Initialize qubits in |0⟩ state
+        let register: int[numQubits];
+        for (let i: int = 0; i < numQubits; i = i + 1) {
+            register[i] = 0;
+        }
+
+        // Create uniform superposition
+        print("Creating uniform superposition...");
+        for (let i: int = 0; i < numQubits; i = i + 1) {
+            register[i] = had(register[i]);
+        }
+
+        // Grover iterations
+        print("Performing Grover iterations...");
+        for (let iter: int = 0; iter < iterations; iter = iter + 1) {
+            print("Iteration ", iter + 1, " of ", iterations);
+            
+            // Apply oracle
+            register = oracle(register, targetIndex);
+            
+            // Apply diffusion operator
+            register = diffusion(register);
+        }
+
+        // Measure the result
+        print("Measuring quantum register...");
+        let result: int = 0;
+        for (let i: int = 0; i < numQubits; i = i + 1) {
+            let bit: int = measure(register[i]);
+            result = result + bit * pow(2, i);
+        }
+        
+        return result;
+    }
+
+    // Probability analysis function
+    def analyzeSuccess(found: int, target: int, numQubits: int) -> void {
+        let n: int = pow(2, numQubits);
+        let successProb: float = 0.0;
+        
+        if (found == target) {
+            // Theoretical success probability after optimal iterations
+            let optimalIter: int = round(pi() * sqrt(n) / 4);
+            successProb = sin(((2 * optimalIter + 1) * pi()) / (4 * sqrt(n)));
+            successProb = successProb * successProb;
+            
+            print("🎯 SUCCESS! Found target element.");
+            print("Theoretical success probability: ", successProb * 100, "%");
+        } else {
+            print("❌ Target not found. Quantum measurement gave: ", found);
+            print("This can happen due to quantum probabilistic nature.");
+        }
+    }
+
+    // Demo execution
+    print("=================================");
+    print("   GROVER'S QUANTUM SEARCH     ");
+    print("=================================");
+    print("");
+
+    // Test Case 1: 3-qubit search (8 elements)
+    let numQubits: int = 3;
+    let targetElement: int = 5;  // Looking for element at index 5
+    
+    print("🚀 Starting Grover search...");
+    print("");
+    
+    let foundIndex: int = groverSearch(numQubits, targetElement);
+    
+    print("");
+    print("=== RESULTS ===");
+    print("Target index: ", targetElement);
+    print("Found index:  ", foundIndex);
+    print("");
+    
+    analyzeSuccess(foundIndex, targetElement, numQubits);
+    
+    print("");
+    print("=== ALGORITHM ANALYSIS ===");
+    let databaseSize: int = pow(2, numQubits);
+    let classicalComplexity: int = databaseSize / 2;  // Average case
+    let quantumComplexity: int = round(sqrt(databaseSize));
+    
+    print("Database size: ", databaseSize, " elements");
+    print("Classical search complexity: O(", classicalComplexity, ")");
+    print("Quantum search complexity:   O(", quantumComplexity, ")");
+    print("Speedup factor: ~", classicalComplexity / quantumComplexity, "x");
+    
+    print("");
+    print("=== Grover Search Complete ===");
+}
